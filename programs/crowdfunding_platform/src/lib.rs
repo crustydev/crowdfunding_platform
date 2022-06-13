@@ -108,7 +108,7 @@ pub struct Fundraiser {
 }
 
 impl Fundraiser {
-    const LEN: usize = (PUBKEY_LEN * 3) + STRING_LEN + (UNSIGNED_64_LEN * 2);
+    const LEN: usize = (PUBKEY_LEN * 3) + STRING_LEN + (UNSIGNED_64_LEN * 2) + DISCRIMINATOR_LEN;
 }
 
 #[derive(Clone, Copy, PartialEq, AnchorDeserialize, AnchorSerialize)]
