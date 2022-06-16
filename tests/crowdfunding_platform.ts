@@ -5,7 +5,8 @@ import * as spl from '@solana/spl-token'
 import { getMinimumBalanceForRentExemptAccount, getMinimumBalanceForRentExemptMint, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { CrowdfundingPlatform } from "../target/types/crowdfunding_platform";
 import { TokenAccountNotFoundError } from "@solana/spl-token";
-import * as bs58 from "bs58"
+import { expect } from 'chai';
+
 
 describe("crowdfunding_platform", () => {
   // Configure the client to use the local cluster.
@@ -32,17 +33,15 @@ describe("crowdfunding_platform", () => {
     );
     console.log("state PDA is ", statePDA);
 
-    let [fundingWalletPDA, fundingWalletBump] = await anchor.web3.PublicKey.findProgramAddress(
+    let [receivingWalletPDA, receivingWalletBump] = await anchor.web3.PublicKey.findProgramAddress(
       [Buffer.from(anchor.utils.bytes.utf8.encode("funding-wallet")), fundstarter.publicKey.toBuffer()], program.programId
     );
-    console.log("fundingwallet PDA is ", fundingWalletPDA);
+    console.log("fundingwallet PDA is ", receivingWalletPDA);
 
     const createMint = async (connection: anchor.web3.Connection): Promise<anchor.web3.PublicKey> => {
       const tokenMint = anchor.web3.Keypair.generate();
       console.log(`tokenMint: ${tokenMint.publicKey.toBase58()}`);
       let tx = new anchor.web3.Transaction();
-
-      console.log("did transaction fail?");
 
       tx.add(
         // create mint account
@@ -62,32 +61,19 @@ describe("crowdfunding_platform", () => {
           )
       );
 
-      console.log("did transaction to create an account fail?");
-
       const tx_signature = await provider.sendAndConfirm(tx, [tokenMint]);
       console.log(`[${tokenMint.publicKey}] created a new mint account at ${tx_signature}`);
-      console.log("did signature verification pass?");
 
       return tokenMint.publicKey;
     }
 
-    const readAccount = async (accountPubkey: anchor.web3.PublicKey, provider: anchor.Provider): Promise<[spl.RawAccount, string]> =>  {
-      const tokenInfo = await provider.connection.getAccountInfo(accountPubkey);
-      const data = Buffer.from(tokenInfo.data);
-      const accountInfo: spl.RawAccount = spl.AccountLayout.decode(data);
-
-      const amount = (accountInfo.amount as any as Buffer).readBigUInt64LE();
-      return [accountInfo, amount.toString()];
-    }
-
-    console.log("Starting mint creation");
     let mintAddress = await createMint(provider.connection);
-    console.log("Did mint creation fail?") 
     console.log("Mint address is: ", mintAddress);
-    let expected_description = "Help fund my shopping habit";
+
+    let expected_description = "Help fund my spending habit";
     let expected_target = new anchor.BN(20);
 
-    console.log("starting fundraiser...");
+    console.log("Starting fundraiser...");
     await program.methods
       .startFundraiser(
         expected_description,
@@ -97,7 +83,7 @@ describe("crowdfunding_platform", () => {
       .accounts({
         fundStarter: fundstarter.publicKey,
         fundraiserState: statePDA,
-        receivingWallet: fundingWalletPDA,
+        receivingWallet: receivingWalletPDA,
         tokenMint: mintAddress,
         systemProgram: anchor.web3.SystemProgram.programId,
         tokenProgram: spl.TOKEN_PROGRAM_ID,
@@ -106,21 +92,18 @@ describe("crowdfunding_platform", () => {
       .signers([fundstarter])
       .rpc();
 
-    console.log(`Started new fundraiser to raise 20 tokens`);
+    console.log(`Started new fundraiser to raise ${expected_target} tokens`);
 
-    const fundraiserState = await program.account.fundraiser.fetch(statePDA);
+    const state = await program.account.fundraiser.fetch(statePDA);
+    let tokenAccountBalance = await provider.connection.getTokenAccountBalance(receivingWalletPDA);
       
-    assert.equal(fundraiserState.fundStarter, fundstarter.publicKey);
-    assert.equal(fundraiserState.receivingWallet, fundingWalletPDA);
-    assert.equal(fundraiserState.description, expected_description);
-    assert.equal(fundraiserState.target, expected_target);
-    assert.equal(fundraiserState.balance, new anchor.BN(0));
-    assert.equal(fundraiserState.tokenMint, mintAddress);
-    assert.equal(fundraiserState.bump, stateBump);
-    assert.equal(fundraiserState.status, 1);    
-
-    const[, fundsWalletBalance] = await readAccount(fundingWalletPDA, provider);
-
-    assert.equal(fundsWalletBalance, '0');
+    assert.equal(state.balance.toNumber(), new anchor.BN(0));
+    assert.equal(state.target.toNumber(), expected_target);
+    assert.equal(state.description.toString(), expected_description);
+    assert.ok(state.tokenMint.equals(mintAddress));
+    assert.ok(state.fundStarter.equals(fundstarter.publicKey));
+    assert.ok(state.receivingWallet.equals(receivingWalletPDA));
+    assert.equal(state.status, new anchor.BN(1));
+    assert.equal(state.balance.toNumber(),tokenAccountBalance.value.uiAmount);
   });
 });

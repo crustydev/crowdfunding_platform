@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{CloseAccount, Mint, Token, TokenAccount, Transfer};
 
-declare_id!("BF2rXUqcBcyxpXYb5dKzRsKn9r2GSWTT1cEQaLKj1V8S");
+declare_id!("6AUsvVK5AJb8XnUfiN7gGw9tUD6AQfAFdmV4CCtxuMhw");
 
 const DISCRIMINATOR_LEN: usize = 8;
 const MAX_DESCRIPTION_LEN: usize = 200;
@@ -9,20 +9,8 @@ const MAX_DESCRIPTION_LEN: usize = 200;
 const PUBKEY_LEN: usize = 32;
 const STRING_LEN: usize = MAX_DESCRIPTION_LEN + 4;
 const UNSIGNED_64_LEN: usize = 8;
+const UNSIGNED_8_LEN: usize = 1;
 
-#[error_code]
-pub enum CrowdFundError {
-    #[msg("Target set for fund-raising must be greater than 0")]
-    InvalidTarget,
-    #[msg("Maxed out space for fund-raiser description")]
-    DescriptionTooLong,
-    #[msg("Invalid fundraiser status")]
-    InvalidStatus,
-    #[msg("You tried to donate to a closed fundraiser")]
-    ClosedToDonations,
-    #[msg("State balance does not correlate with wallet balance")]
-    ErroneousBalance,
-}
 
 #[program]
 pub mod crowdfunding_platform {
@@ -47,7 +35,7 @@ pub mod crowdfunding_platform {
         fundraiser.target = target;
         fundraiser.balance = 0;
         fundraiser.token_mint = token_mint;
-        fundraiser.bump = *ctx.bumps.get("fundraiser").unwrap();
+        //fundraiser.bump = *ctx.bumps.get("fundraiser").unwrap();
         fundraiser.status = Status::DonationsOpen.to_u8();
         Ok(())
     }
@@ -253,13 +241,11 @@ pub struct Fundraiser {
     // The mint of the token the user is trying to raise
     token_mint: Pubkey,
 
-    bump: u8,
-
     status: u8,
 }
 
 impl Fundraiser {
-    const LEN: usize = (PUBKEY_LEN * 3) + STRING_LEN + (UNSIGNED_64_LEN * 2) + DISCRIMINATOR_LEN;
+    const LEN: usize = (PUBKEY_LEN * 3) + STRING_LEN + (UNSIGNED_64_LEN * 2) + UNSIGNED_8_LEN * 2 + DISCRIMINATOR_LEN;
 }
 
 #[derive(Clone, Copy, PartialEq, AnchorDeserialize, AnchorSerialize)]
@@ -290,3 +276,19 @@ impl Status {
         }
     }
 }
+
+
+#[error_code]
+pub enum CrowdFundError {
+    #[msg("Target set for fund-raising must be greater than 0")]
+    InvalidTarget,
+    #[msg("Maxed out space for fund-raiser description")]
+    DescriptionTooLong,
+    #[msg("Invalid fundraiser status")]
+    InvalidStatus,
+    #[msg("You tried to donate to a closed fundraiser")]
+    ClosedToDonations,
+    #[msg("State balance does not correlate with wallet balance")]
+    ErroneousBalance,
+}
+
