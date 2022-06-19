@@ -204,6 +204,7 @@ pub struct Withdraw<'info> {
     )]
     receiving_wallet: Account<'info, TokenAccount>,
 
+    #[account(mut)]
     fund_starter: Signer<'info>,
     token_mint: Account<'info, Mint>,
 
@@ -286,7 +287,5 @@ pub enum CrowdFundError {
     InvalidStatus,
     #[msg("You tried to donate to a closed fundraiser")]
     ClosedToDonations,
-    #[msg("Random")]
-    Random,
 }
 
