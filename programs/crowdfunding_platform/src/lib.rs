@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{CloseAccount, Mint, Token, TokenAccount, Transfer};
 
-declare_id!("6AUsvVK5AJb8XnUfiN7gGw9tUD6AQfAFdmV4CCtxuMhw");
+declare_id!("BwRQnxwjCkVk5uFNLVgacEBXgVreQL79KmtzrHhLvSfv");
 
 const DISCRIMINATOR_LEN: usize = 8;
 const MAX_DESCRIPTION_LEN: usize = 200;
@@ -46,12 +46,7 @@ pub mod crowdfunding_platform {
             msg!("This fundraising campaign is closed to Donations");
             return Err(CrowdFundError::ClosedToDonations.into());
         }
-
-        if current_status != Status::DonationsOpen {
-            msg!("Invalid status");
-            return Err(CrowdFundError::InvalidStatus.into());
-        }
-
+    
         let fundraiser_state = &mut ctx.accounts.fundraiser_state;
 
         let donating_wallet = ctx.accounts.donator_wallet.to_owned();
@@ -69,16 +64,17 @@ pub mod crowdfunding_platform {
         let cpi_ctx = CpiContext::new(token_program.to_account_info(), transfer_instruction);
 
         anchor_spl::token::transfer(cpi_ctx, token_amount)?;
-        _ = fundraiser_state.balance.checked_add(amount);
+        fundraiser_state.balance = fundraiser_state.balance.checked_add(token_amount).unwrap();
 
         receiving_wallet.reload()?;
+        
         assert_eq!(
             fundraiser_state.balance, receiving_wallet.amount
         );
 
         if fundraiser_state.balance >= fundraiser_state.target {
             msg!("Fundraiser goal met!");
-            _ = fundraiser_state.status == Status::DonationsClosed.to_u8();
+            fundraiser_state.status = Status::DonationsClosed.to_u8();
         }
 
         Ok(())
@@ -202,7 +198,7 @@ pub struct Withdraw<'info> {
     #[account(
         mut,
         seeds=[b"funding-wallet".as_ref(), fund_starter.key().as_ref()],
-        bump
+        bump,
     )]
     receiving_wallet: Account<'info, TokenAccount>,
 
