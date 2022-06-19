@@ -1,11 +1,12 @@
 import * as anchor from '@project-serum/anchor';
-import { AnchorError, Program } from '@project-serum/anchor';
+import { AnchorError, Program, ProgramErrorStack } from '@project-serum/anchor';
 import * as spl from '@solana/spl-token';
 import { CrowdfundingPlatform } from '../target/types/crowdfunding_platform';
 import assert from 'assert';
 import chai from 'chai';
 import { expect } from 'chai';
 
+// Might have to airdrop to donator to pay for fees
 
 async function donate(program: Program<CrowdfundingPlatform>, donation, donatorBalance, mintAddress, mintAuthority, statePDA) {
     const donator = anchor.web3.Keypair.generate();
@@ -14,14 +15,14 @@ async function donate(program: Program<CrowdfundingPlatform>, donation, donatorB
     
     const donatorWallet = await spl.createAssociatedTokenAccount(
       connection,
-      mintAuthority,
+      donator,
       mintAddress,
       donator.publicKey  
     );
   
     let xx = await spl.mintToChecked(
       connection,
-      mintAuthority,
+      donator,
       mintAddress,
       donatorWallet,
       mintAuthority,
@@ -269,6 +270,9 @@ describe('crowdfunding_platform', () => {
       statePDA
     );
 
+    const state = await program.account.fundraiser.fetch(statePDA);
+    assert.equal(state.status, new anchor.BN(2));
+
     try {
       await donate(
         program, 
@@ -286,5 +290,59 @@ describe('crowdfunding_platform', () => {
       expect(err.error.errorCode.code).to.equal("ClosedToDonations");
     }
     
+  });
+
+  it('simulates a withdrawal', async () => {
+
+    // Create ATA for user withdrawal
+    const withdrawalWallet = await spl.createAssociatedTokenAccount(
+      provider.connection,
+      fundstarter,
+      mintAddress,
+      fundstarter.publicKey
+    );
+
+    const initialState = await program.account.fundraiser.fetch(statePDA);
+    let fundsRaised = initialState.balance;
+
+    await program.methods
+      .withdraw()
+      .accounts({
+        fundraiserState: statePDA,
+        receivingWallet: receivingWalletPDA,
+        fundStarter: fundstarter,
+        tokenMint: mintAddress,
+        systemProgram: anchor.web3.SystemProgram.programId,
+        tokenProgram: spl.TOKEN_PROGRAM_ID,
+        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+        walletToWithdrawTo: withdrawalWallet,
+      })
+      .signers([fundstarter])
+      .rpc();
+
+    console.log("Withdrawal complete! Fundraiser campaign ended!");
+
+    const state = await program.account.fundraiser.fetch(statePDA);
+ 
+    const withdrawalWalletBalance = await(await provider.connection.getTokenAccountBalance(
+      withdrawalWallet)).value.uiAmount;
+
+    assert.equal(state.balance.toNumber(), new anchor.BN(0));
+    assert.equal(state.status, new anchor.BN(3));
+    assert.equal(withdrawalWalletBalance, new anchor.BN(fundsRaised));
+/*
+    // Assert that the fundraiser receiving wallet is closed
+    try {
+      const info = await provider.connection.getAccountInfo(receivingWalletPDA);
+      return assert.fail("Account should be closed");
+    } catch (_err) {
+      assert.equal(_err.message, "Cannot read properties of null (reading 'data')");
+    }*/
+
+    const info = await provider.connection.getAccountInfo(receivingWalletPDA);
+
+    
+     
+
   });
 });
