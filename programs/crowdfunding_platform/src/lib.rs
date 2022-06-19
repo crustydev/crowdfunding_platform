@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{CloseAccount, Mint, Token, TokenAccount, Transfer};
 
-declare_id!("9ABtXfnAvwaWmBkjf2sZzwxrgYnW6v2vofDBCH6JbFiL");
+declare_id!("9S6Pdg29k9vbN2r44JNwZBxuxcMzoEDmG8fEashzo67G");
 
 const DISCRIMINATOR_LEN: usize = 8;
 const MAX_DESCRIPTION_LEN: usize = 200;
