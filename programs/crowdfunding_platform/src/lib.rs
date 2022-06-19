@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{CloseAccount, Mint, Token, TokenAccount, Transfer};
 
-declare_id!("BwRQnxwjCkVk5uFNLVgacEBXgVreQL79KmtzrHhLvSfv");
+declare_id!("9ABtXfnAvwaWmBkjf2sZzwxrgYnW6v2vofDBCH6JbFiL");
 
 const DISCRIMINATOR_LEN: usize = 8;
 const MAX_DESCRIPTION_LEN: usize = 200;
@@ -102,6 +102,8 @@ pub mod crowdfunding_platform {
         };
         let cpi_ctx = CpiContext::new(token_program.to_account_info(), transfer_instruction);
         anchor_spl::token::transfer(cpi_ctx, amount_to_withdraw)?;
+
+        fundraiser_state.balance = fundraiser_state.balance.checked_sub(amount_to_withdraw).unwrap();
 
         let should_close = {
             funds_pot.reload()?;
@@ -284,7 +286,7 @@ pub enum CrowdFundError {
     InvalidStatus,
     #[msg("You tried to donate to a closed fundraiser")]
     ClosedToDonations,
-    #[msg("State balance does not correlate with wallet balance")]
-    ErroneousBalance,
+    #[msg("Random")]
+    Random,
 }
 
