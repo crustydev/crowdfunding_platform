@@ -9,8 +9,19 @@ import { expect } from 'chai';
 // Might have to airdrop to donator to pay for fees
 
 async function donate(program: Program<CrowdfundingPlatform>, donation, donatorBalance, mintAddress, mintAuthority, statePDA) {
-    const donator = anchor.web3.Keypair.generate();
     const connection = program.provider.connection;
+    const donator = anchor.web3.Keypair.generate();
+
+    // airdrop sol to donator
+    const airdropSignature = await connection.requestAirdrop(donator.publicKey, 2 * anchor.web3.LAMPORTS_PER_SOL);
+    const latestBlockHash = await connection.getLatestBlockhash();
+
+    await program.provider.connection.confirmTransaction({
+      blockhash: latestBlockHash.blockhash,
+      lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
+      signature: airdropSignature,
+    });
+
     const state = await program.account.fundraiser.fetch(statePDA);
     
     const donatorWallet = await spl.createAssociatedTokenAccount(
@@ -141,7 +152,7 @@ describe('crowdfunding_platform', () => {
 
     [mintAddress, mintAuthority] = await createTokenMint(provider.connection);
 
-  // Assert that an attempt to set description with length > 200 fails
+  // Assert that an attempt to start a fundraiser with length of description > 200 fails
     try {
       let expected_description = "Help fund my spending habit. I'm going on and on right now to max out the description length. Howdy. Howdy. Howdy. Howdy. Ahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh";
       let expected_target = new anchor.BN(100);
@@ -175,7 +186,7 @@ describe('crowdfunding_platform', () => {
 
     // Assert that an attempt to start a fundraiser with target < 0 fails
     try {
-      let expected_description = "Help fund my spending habit. I'm going on and on right now to max out the description length. Howdy. Howdy. Howdy. Howdy. Ahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh";
+      let expected_description = "Help fund my spending habit.";
       let expected_target = new anchor.BN(0);
   
       await program.methods
@@ -310,7 +321,7 @@ describe('crowdfunding_platform', () => {
       .accounts({
         fundraiserState: statePDA,
         receivingWallet: receivingWalletPDA,
-        fundStarter: fundstarter,
+        fundStarter: fundstarter.publicKey,
         tokenMint: mintAddress,
         systemProgram: anchor.web3.SystemProgram.programId,
         tokenProgram: spl.TOKEN_PROGRAM_ID,
