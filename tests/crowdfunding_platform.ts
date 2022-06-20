@@ -341,19 +341,18 @@ describe('crowdfunding_platform', () => {
     assert.equal(state.balance.toNumber(), new anchor.BN(0));
     assert.equal(state.status, new anchor.BN(3));
     assert.equal(withdrawalWalletBalance, new anchor.BN(fundsRaised));
-/*
+
     // Assert that the fundraiser receiving wallet is closed
     try {
+      // Try to get account info
       const info = await provider.connection.getAccountInfo(receivingWalletPDA);
+      const data = Buffer.from(info.data);
+      const accountInfo = spl.AccountLayout.decode(data);
+
+      // It should fail
       return assert.fail("Account should be closed");
     } catch (_err) {
       assert.equal(_err.message, "Cannot read properties of null (reading 'data')");
-    }*/
-
-    const info = await provider.connection.getAccountInfo(receivingWalletPDA);
-
-    
-     
-
+    }
   });
 });
