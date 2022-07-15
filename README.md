@@ -24,8 +24,8 @@ Deploy the contract to the devnet by following these steps on your cli:
 macro at the top of `lib.rs` and replace the default key in `Anchor.toml`
 - Change the `provider.cluster` variable in `Anchor.toml` to `devnet`
 #### Deploy and test
-- Run ` sh anchor deploy `
-- Run ` sh anchor run test `
+- Run ` anchor deploy `
+- Run ` anchor run test `
 
 
 
