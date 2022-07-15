@@ -2,15 +2,15 @@
 > ## Description
 A smart contract that lets a user start a fundraiser and allows other users contribute to that fundraiser, kinda like gofundme :smiley:
 
+
 > ## Requirements
-#
 - [Rust](https://www.rust-lang.org/tools/install)
 - [Solana](https://docs.solana.com/cli/install-solana-cli-tools)
 - [Yarn](https://yarnpkg.com/getting-started/install)
 - [Anchor](https://book.anchor-lang.com/getting_started/installation.html)
 
-View the full steps to setup environment [here](https://book.anchor-lang.com/getting_started/installation.html)
-#
+View the full steps [here.](https://book.anchor-lang.com/getting_started/installation.html)
+
 > ## Build and Testing
 Deploy the contract to the devnet by following these steps on your cli:
 
