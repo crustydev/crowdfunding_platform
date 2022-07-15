@@ -1,43 +1,30 @@
-### Crowdfunding platform
-A decentralized application that lets a user start a fundraiser and allows other users to contribute to that fundraiser.
+# Solana crowdfunding contract
+> ## Description
+A smart contract that lets a user start a fundraiser and allows other users contribute to that fundraiser, kinda like gofundme :smiley:
 
-### Prerequisites
+> ## Requirements
+#
+- [Rust](https://www.rust-lang.org/tools/install)
+- [Solana](https://docs.solana.com/cli/install-solana-cli-tools)
+- [Yarn](https://yarnpkg.com/getting-started/install)
+- [Anchor](https://book.anchor-lang.com/getting_started/installation.html)
 
-1. Solana Tool Suite - You can see the installation instructions [here](https://docs.solana.com/cli/install-solana-cli-tools).
+View the full steps to setup environment [here](https://book.anchor-lang.com/getting_started/installation.html)
+#
+> ## Build and Testing
+Deploy the contract to the devnet by following these steps on your cli:
 
-2. Anchor - You can find the installation instructions [here](https://project-serum.github.io/anchor/getting-started/installation.html).
+- Navigate to your cli
+- Run ```sh solana-keygen new``` to create a wallet keypair
+- Run ```sh solana airdrop 2 ``` to airdrop sol to your wallet
+- Clone the repo and change into its root directory
+- Run ```sh anchor build``` to generate a new public key for your program
+- Run ```sh anchor keys list``` .Copy the new pubkey into your declare_id!
+macro at the top of `lib.rs` and replace the default key in `Anchor.toml`
+- Change the `provider.cluster` variable in `Anchor.toml` to `devnet`
+- Run ```sh anchor deploy```
+- Run ```sh anchor run test```
 
-
-### Build
-
-You probably need to install Solana, Anchor and Rust to make it run.
-If you haven't already, install those dependencies by following this tutorial :https://project-serum.github.io/anchor/getting-started/installation.html or the steps in the prerequisites section above.
-
-
-When you are set up, clone the repo and run the tests using the following steps:
-
-1. Change into the project directory you'd like to run
-
-2. Fetch the project ID for the build:
-
-```sh
-solana address -k target/deploy/<programname>-keypair.json
-```
-
-3. Update the project ID in the Rust program located at __myepicproject/programs/src/lib.rs__ with the output from above.
-
-4. Run the tests
-
-```sh
-anchor test
-```
-This builds the program, deploys it and then runs the tests.
-
-5. If you need to you can airdrop solana to your address using:
-
-```bash
-solana airdrop 2 <YOURPUBKEY>
-```
 
 
 
