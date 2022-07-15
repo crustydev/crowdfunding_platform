@@ -14,7 +14,6 @@ View the full steps [here.](https://book.anchor-lang.com/getting_started/install
 > ## Build and Testing
 Deploy the contract to the devnet by following these steps on your cli:
 
-- Navigate to your cli
 #### Generate wallet
 - Run ```sh solana-keygen new``` to create a wallet keypair
 - Run ```sh solana airdrop 2 ``` to airdrop sol to your wallet
