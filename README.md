@@ -15,17 +15,17 @@ View the full steps [here.](https://book.anchor-lang.com/getting_started/install
 Deploy the contract to the devnet by following these steps on your cli:
 
 #### Generate wallet
-- Run ```sh solana-keygen new``` to create a wallet keypair
-- Run ```sh solana airdrop 2 ``` to airdrop sol to your wallet
+- Run ` solana-keygen new ` to create a wallet keypair
+- Run ` solana airdrop 2 ` to airdrop sol to your wallet
 #### Build
 - Clone the repo and change into its root directory
-- Run ```sh anchor build``` to generate a new public key for your program
-- Run ```sh anchor keys list``` .Copy the new pubkey into your declare_id!
+- Run ` anchor build ` to generate a new public key for your program
+- Run ` anchor keys list ` .Copy the new pubkey into your declare_id!
 macro at the top of `lib.rs` and replace the default key in `Anchor.toml`
 - Change the `provider.cluster` variable in `Anchor.toml` to `devnet`
 #### Deploy and test
-- Run ```sh anchor deploy```
-- Run ```sh anchor run test```
+- Run ` sh anchor deploy `
+- Run ` sh anchor run test `
 
 
 
