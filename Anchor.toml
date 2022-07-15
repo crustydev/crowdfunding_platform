@@ -1,7 +1,7 @@
 [features]
 seeds = false
 [programs.devnet]
-crowdfunding_platform = "9S6Pdg29k9vbN2r44JNwZBxuxcMzoEDmG8fEashzo67G"
+crowdfunding_platform = "2o5Gag9gM61fRETbRBCTevNcoCGGUpvvZoJadnD324bm"
 
 [registry]
 url = "https://anchor.projectserum.com"
