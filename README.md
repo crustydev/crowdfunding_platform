@@ -1,4 +1,4 @@
-# Solana crowdfunding contract
+## Solana crowdfunding contract
 > ## Description
 A smart contract that lets a user start a fundraiser and allows other users contribute to that fundraiser, kinda like GoFundMe.
 
@@ -14,16 +14,16 @@ View the full steps [here.](https://book.anchor-lang.com/getting_started/install
 > ## Build and Testing
 Deploy the contract to the devnet by following these steps on your cli:
 
-#### Generate wallet
+### Generate wallet
 - Run ` solana-keygen new ` to create a wallet keypair
 - Run ` solana airdrop 2 ` to airdrop sol to your wallet
-#### Build
+### Build
 - Clone the repo and change into its root directory
 - Run ` anchor build ` to generate a new public key for your program
 - Run ` anchor keys list ` .Copy the new pubkey into your declare_id!
 macro at the top of `lib.rs` and replace the default key in `Anchor.toml`
 - Change the `provider.cluster` variable in `Anchor.toml` to `devnet`
-#### Deploy and test
+### Deploy and test
 - Run ` anchor deploy `
 - Run ` anchor run test `
 
