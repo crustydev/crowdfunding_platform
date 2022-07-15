@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{CloseAccount, Mint, Token, TokenAccount, Transfer};
 
-declare_id!("9S6Pdg29k9vbN2r44JNwZBxuxcMzoEDmG8fEashzo67G");
+declare_id!("2o5Gag9gM61fRETbRBCTevNcoCGGUpvvZoJadnD324bm");
 
 const DISCRIMINATOR_LEN: usize = 8;
 const MAX_DESCRIPTION_LEN: usize = 200;
@@ -10,7 +10,6 @@ const PUBKEY_LEN: usize = 32;
 const STRING_LEN: usize = MAX_DESCRIPTION_LEN + 4;
 const UNSIGNED_64_LEN: usize = 8;
 const UNSIGNED_8_LEN: usize = 1;
-
 
 #[program]
 pub mod crowdfunding_platform {
@@ -23,32 +22,31 @@ pub mod crowdfunding_platform {
         token_mint: Pubkey,
     ) -> Result<()> {
         require!(target > 0, CrowdFundError::InvalidTarget);
-        let fundraiser = &mut ctx.accounts.fundraiser_state;
+        let fundraiser_state = &mut ctx.accounts.fundraiser_state;
 
-        fundraiser.fund_starter = ctx.accounts.fund_starter.key();
+        fundraiser_state.fund_starter = ctx.accounts.fund_starter.key();
         require!(
             description.chars().count() <= MAX_DESCRIPTION_LEN,
             CrowdFundError::DescriptionTooLong
         );
-        fundraiser.receiving_wallet = ctx.accounts.receiving_wallet.key();
-        fundraiser.description = description;
-        fundraiser.target = target;
-        fundraiser.balance = 0;
-        fundraiser.token_mint = token_mint;
-        //fundraiser.bump = *ctx.bumps.get("fundraiser").unwrap();
-        fundraiser.status = Status::DonationsOpen.to_u8();
+        fundraiser_state.receiving_wallet = ctx.accounts.receiving_wallet.key();
+        fundraiser_state.description = description;
+        fundraiser_state.target = target;
+        fundraiser_state.balance = 0;
+        fundraiser_state.token_mint = token_mint;
+        fundraiser_state.status = Status::DonationsOpen.to_u8();
+        fundraiser_state.bump = *ctx.bumps.get("fundraiser_state").unwrap();
         Ok(())
     }
 
     pub fn donate(ctx: Context<Donate>, amount: u64) -> Result<()> {
         let current_status = Status::from(ctx.accounts.fundraiser_state.status)?;
-        if current_status == Status::DonationsClosed || current_status == Status::CampaignEnded {
-            msg!("This fundraising campaign is closed to Donations");
-            return Err(CrowdFundError::ClosedToDonations.into());
-        }
-    
-        let fundraiser_state = &mut ctx.accounts.fundraiser_state;
+        require!(
+            current_status == Status::DonationsOpen,
+            CrowdFundError::ClosedToDonations
+        );
 
+        let fundraiser_state = &mut ctx.accounts.fundraiser_state;
         let donating_wallet = ctx.accounts.donator_wallet.to_owned();
         let receiving_wallet = &mut ctx.accounts.receiving_wallet.to_owned();
         let donator = ctx.accounts.donator.to_owned();
@@ -67,10 +65,8 @@ pub mod crowdfunding_platform {
         fundraiser_state.balance = fundraiser_state.balance.checked_add(token_amount).unwrap();
 
         receiving_wallet.reload()?;
-        
-        assert_eq!(
-            fundraiser_state.balance, receiving_wallet.amount
-        );
+
+        assert_eq!(fundraiser_state.balance, receiving_wallet.amount);
 
         if fundraiser_state.balance >= fundraiser_state.target {
             msg!("Fundraiser goal met!");
@@ -103,7 +99,10 @@ pub mod crowdfunding_platform {
         let cpi_ctx = CpiContext::new(token_program.to_account_info(), transfer_instruction);
         anchor_spl::token::transfer(cpi_ctx, amount_to_withdraw)?;
 
-        fundraiser_state.balance = fundraiser_state.balance.checked_sub(amount_to_withdraw).unwrap();
+        fundraiser_state.balance = fundraiser_state
+            .balance
+            .checked_sub(amount_to_withdraw)
+            .unwrap();
 
         let should_close = {
             funds_pot.reload()?;
@@ -240,11 +239,19 @@ pub struct Fundraiser {
     // The mint of the token the user is trying to raise
     token_mint: Pubkey,
 
+    // Bump of fundraiser PDA
+    bump: u8,
+
+    // Status of fundraising campaign
     status: u8,
 }
 
 impl Fundraiser {
-    const LEN: usize = (PUBKEY_LEN * 3) + STRING_LEN + (UNSIGNED_64_LEN * 2) + UNSIGNED_8_LEN * 2 + DISCRIMINATOR_LEN;
+    const LEN: usize = (PUBKEY_LEN * 3)
+        + STRING_LEN
+        + (UNSIGNED_64_LEN * 2)
+        + 2 * (UNSIGNED_8_LEN)
+        + DISCRIMINATOR_LEN;
 }
 
 #[derive(Clone, Copy, PartialEq, AnchorDeserialize, AnchorSerialize)]
@@ -276,7 +283,6 @@ impl Status {
     }
 }
 
-
 #[error_code]
 pub enum CrowdFundError {
     #[msg("Target set for fund-raising must be greater than 0")]
@@ -288,4 +294,3 @@ pub enum CrowdFundError {
     #[msg("You tried to donate to a closed fundraiser")]
     ClosedToDonations,
 }
-

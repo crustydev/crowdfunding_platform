@@ -6,7 +6,6 @@ import assert from 'assert';
 import chai from 'chai';
 import { expect } from 'chai';
 
-// Might have to airdrop to donator to pay for fees
 
 async function donate(program: Program<CrowdfundingPlatform>, donation, donatorBalance, mintAddress, mintAuthority, statePDA) {
     const connection = program.provider.connection;
@@ -107,9 +106,6 @@ async function donate(program: Program<CrowdfundingPlatform>, donation, donatorB
   
     return [mintAddress, mintAuthority];
   }
-
-
-
 
 
 describe('crowdfunding_platform', () => {
@@ -216,12 +212,12 @@ describe('crowdfunding_platform', () => {
 
     // Start a fundraiser with valid parameters
     let expected_description = "Help fund my spending habit";
-    let expected_target = new anchor.BN(100);
+    let expected_target = 100;
 
     await program.methods
       .startFundraiser(
         expected_description,
-        expected_target,
+        new anchor.BN(expected_target),
         mintAddress
       )
       .accounts({
@@ -241,13 +237,13 @@ describe('crowdfunding_platform', () => {
     const state = await program.account.fundraiser.fetch(statePDA);
     let tokenAccountBalance = await provider.connection.getTokenAccountBalance(receivingWalletPDA);
       
-    assert.equal(state.balance.toNumber(), new anchor.BN(0));
+    assert.equal(state.balance.toNumber(), 0);
     assert.equal(state.target.toNumber(), expected_target);
     assert.equal(state.description.toString(), expected_description);
     assert.ok(state.tokenMint.equals(mintAddress));
     assert.ok(state.fundStarter.equals(fundstarter.publicKey));
     assert.ok(state.receivingWallet.equals(receivingWalletPDA));
-    assert.equal(state.status, new anchor.BN(1));
+    assert.equal(state.status, 1);
     assert.equal(state.balance.toNumber(),tokenAccountBalance.value.uiAmount);
   });
 
